@@ -1179,5 +1179,26 @@ echo $OPENAI_API_KEY
 
 ---
 
+## 🔐 Vault Integration
+
+O `mordomo-brain` usa APIs de LLM cloud (OpenAI, Anthropic, Groq, Google). Essas API keys **não ficam em env vars** — são obtidas do `mordomo-vault` via `service` auth na inicialização do container.
+
+```yaml
+Credenciais gerenciadas pelo vault:
+  - openai_api_key
+  - anthropic_api_key
+  - groq_api_key
+  - google_ai_api_key
+
+Auth mode: service
+Módulo token: ${VAULT_MODULE_TOKEN}  # emitido pelo vault CLI no bootstrap
+```
+
+As keys são carregadas uma vez na inicialização e mantidas em memória. Em caso de rotação, o vault publica `mordomo.vault.secret.rotated` e o brain recarrega.
+
+Veja: [mordomo-vault](https://github.com/AslamSys/mordomo-vault)
+
+---
+
 **Versão:** 1.0  
 **Última atualização:** 27/11/2025
