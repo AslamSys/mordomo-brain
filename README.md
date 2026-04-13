@@ -57,26 +57,24 @@ Cérebro do assistente: processa linguagem natural, mantém contexto por usuári
 
 ## 🔧 Tecnologias
 
-### LLM Local
-**Ollama** - Runtime para modelos locais
-- Suporta Qwen, Llama, Mistral, Phi
-- API compatível com OpenAI
-- Otimizado para CPU/GPU
-- Quantização automática
+### LLM Cloud (Padrão)
 
-**Modelos Recomendados:**
+O Orange Pi 5 **não roda LLM local**. Toda inferência é feita via API cloud.
+
 ```yaml
-Primary: qwen2.5:3b (3GB RAM, rápido, português ok)
-Fallback: llama3.2:3b (backup)
-Heavy: qwen2.5:7b (melhor qualidade, mais lento)
+OpenAI: gpt-4o-mini (padrão), gpt-4o (complexo)
+Anthropic: claude-3.5-haiku (padrão), claude-3.5-sonnet (complexo)
+Google: gemini-2.0-flash (padrão), gemini-2.0-pro (complexo)
+Groq: llama-3.3-70b (baixa latência, fallback gratuito)
 ```
 
-### LLM Cloud (Fallback)
+### LLM Local (Futuro — Jetson Orin dedicado)
+
+> ⚠️ **Não implementado no Orange Pi 5.** Quando o Jetson Orin for adquirido, um serviço de inferência local (Ollama ou TensorRT-LLM) será exposto via API compatível com OpenAI na rede interna. O brain apenas aponta o endpoint — sem Ollama no Orange Pi.
+
 ```yaml
-OpenAI: gpt-4o-mini, gpt-4o
-Anthropic: claude-3-haiku, claude-3.5-sonnet
-Google: gemini-1.5-flash, gemini-1.5-pro
-Groq: llama-3.1-70b (rápido)
+Futuro endpoint local: http://jetson-orin:11434/v1
+Modelo candidato: qwen2.5:7b (Jetson tem VRAM dedicada)
 ```
 
 ### Stack Adicional
@@ -92,22 +90,21 @@ sentence-transformers  # Embeddings
 ## 📊 Especificações
 
 ```yaml
-Performance Local (Qwen 2.5 3B):
-  CPU: 40-60% (4 cores ARM)
-  RAM: ~ 3.5 GB
-  Tokens/s: 15-25 (generation)
-  Latency: 1-3s (resposta completa)
-  Context Window: 32k tokens
+Hardware (Orange Pi 5 Ultra):
+  RAM do brain: ~200 MB  # apenas o processo Python + LangChain + cliente HTTP
+  CPU: < 5% idle (sem inferência local)
+  Sem GPU dedicada para LLM
 
-Performance Cloud (GPT-4o-mini):
-  API Call Latency: 500-1500ms
-  Cost: $0.15/1M input tokens
-  Context Window: 128k tokens
+Performance Cloud (padrão):
+  gpt-4o-mini:       latência 500-1500ms | $0.15/1M tokens input
+  claude-3.5-haiku:  latência 400-1200ms | $0.80/1M tokens input
+  gemini-2.0-flash:  latência 300-900ms  | $0.075/1M tokens input  ← mais barato
+  groq llama-3.3-70b: latência 200-600ms | gratuito (rate limited)  ← fallback
 
-Strategies:
-  local-first: 90% uso local, 10% cloud
-  cloud-only: 100% cloud (tarefas complexas)
-  mixed: Local reasoning + Cloud refinement
+Estrategias:
+  cloud-primary:  100% cloud, modelo escolhido por complexidade da query
+  groq-fallback:  se APIs pagas indisponíveis, usa Groq gratuito
+  # local-inference: FUTURO — requer Jetson Orin na rede
 ```
 
 ---
@@ -219,23 +216,29 @@ cloud_apis:
     
   groq:
     api_key: "${GROQ_API_KEY}"
-    model: "llama-3.1-70b-versatile"
+    model: "llama-3.3-70b-versatile"
 
 strategy:
-  default: "local-first"
-  
-  # Condições para cloud
-  use_cloud_if:
-    - query_complexity > 0.8
-    - local_confidence < 0.6
-    - requires_real_time_data: true
-    - user_request_contains: ["pesquise", "busque na internet"]
-  
-  # Fallback automático
-  auto_fallback:
-    enabled: true
-    local_timeout: 5000  # ms
-    local_error_threshold: 3
+  default: "cloud-primary"
+
+  # Roteamento por complexidade
+  routing:
+    simple_command:    gemini-2.0-flash   # IoT, lembretes, perguntas curtas
+    complex_reasoning: gpt-4o-mini        # multi-step, finanças, contexto longo
+    high_stakes:       claude-3.5-haiku   # ações com efeito real (PIX, alarmes)
+
+  # Fallback em cascata (sem local)
+  fallback_chain:
+    - gemini-2.0-flash
+    - gpt-4o-mini
+    - groq/llama-3.3-70b    # gratuito, último recurso
+
+  # Local inference: DESABILITADO no Orange Pi
+  local_inference:
+    enabled: false
+    # Habilitar quando Jetson Orin estiver na rede:
+    # endpoint: http://jetson-orin:11434/v1
+    # model: qwen2.5:7b
 
 rag:
   enabled: true
