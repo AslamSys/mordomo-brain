@@ -1204,4 +1204,43 @@ Veja: [mordomo-vault](https://github.com/AslamSys/mordomo-vault)
 ---
 
 **Versão:** 1.0  
-**Última atualização:** 27/11/2025
+**Última atualização:** 14/04/2026
+
+---
+
+## 🗂️ Estrutura do Repositório
+
+```
+mordomo-brain/
+├── src/
+│   ├── config.py      # Env vars: NATS, LiteLLM, Redis, Qdrant, models
+│   ├── context.py     # Redis db1 — histórico de conversa por speaker_id (TTL 30min)
+│   ├── llm.py         # HTTP client para LiteLLM gateway — roteamento simple/complex/stakes
+│   ├── rag.py         # Qdrant search + upsert (opcional, degrada graciosamente)
+│   ├── actions.py     # Parser de [ACTION: {...}] no texto do LLM
+│   ├── handlers.py    # NATS handler: mordomo.brain.generate (request/reply)
+│   └── main.py        # Entrypoint asyncio + reconnect loop
+├── requirements.txt    # nats-py, redis, httpx
+├── Dockerfile
+├── docker-compose.yml
+└── .env.example
+```
+
+## 🔌 Infraestrutura Utilizada
+
+| Serviço infra | Uso | DB / Endpoint |
+|---|---|---|
+| **NATS** | Subscribe `mordomo.brain.generate`, publish `mordomo.brain.action.*` | — |
+| **Redis** | Histórico de conversa por speaker_id | db1 (mordomo-general) |
+| **Qdrant** | RAG semântico — busca e armazena trechos de conversa | collection `mordomo_conversations` |
+| **LiteLLM Gateway** | Proxy para OpenAI / Anthropic / Groq (API keys ficam no gateway) | porta 4000 |
+
+## 🔄 Roteamento de Modelos
+
+| Tipo de query | Modelo virtual | Exemplo |
+|---|---|---|
+| Simples (IoT, hora, etc) | `mordomo-simple` → gemini-2.0-flash | "Acende a luz da sala" |
+| Complexa (análise, raciocínio) | `mordomo-complex` → gpt-4o-mini | "Explique meu extrato do mês" |
+| Alto risco (finanças, senhas) | `mordomo-stakes` → claude-3.5-haiku | "Faz um PIX de R$500" |
+
+Fallback automático para `mordomo-simple` se modelo primário falhar.

@@ -1,0 +1,18 @@
+services:
+  mordomo-brain:
+    build: .
+    image: renaneunao/mordomo-brain:latest
+    container_name: mordomo-brain
+    env_file: .env
+    networks:
+      - mordomo-net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+networks:
+  mordomo-net:
+    external: true
