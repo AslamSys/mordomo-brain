@@ -18,8 +18,6 @@
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
 - [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
-- [mordomo-action-dispatcher](https://github.com/AslamSys/mordomo-action-dispatcher)
-- [mordomo-skills-runner](https://github.com/AslamSys/mordomo-skills-runner)
 
 ---
 
@@ -175,8 +173,6 @@ message Action {
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
 - [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
-- [mordomo-action-dispatcher](https://github.com/AslamSys/mordomo-action-dispatcher)
-- [mordomo-skills-runner](https://github.com/AslamSys/mordomo-skills-runner)
 
 ---
 subject: "brain.action.{action_type}"
@@ -308,8 +304,6 @@ prompts:
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
 - [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
-- [mordomo-action-dispatcher](https://github.com/AslamSys/mordomo-action-dispatcher)
-- [mordomo-skills-runner](https://github.com/AslamSys/mordomo-skills-runner)
 
 ---
 intents = {
@@ -359,8 +353,6 @@ intents = {
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
 - [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
-- [mordomo-action-dispatcher](https://github.com/AslamSys/mordomo-action-dispatcher)
-- [mordomo-skills-runner](https://github.com/AslamSys/mordomo-skills-runner)
 
 ---
 user_input = "acende a luz da sala"
@@ -466,8 +458,6 @@ async def generate_response(request: GenerateRequest):
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
 - [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
-- [mordomo-action-dispatcher](https://github.com/AslamSys/mordomo-action-dispatcher)
-- [mordomo-skills-runner](https://github.com/AslamSys/mordomo-skills-runner)
 
 ---
 llm_requests_total{model, strategy}
@@ -495,8 +485,6 @@ llm_cost_usd{model}
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
 - [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
-- [mordomo-action-dispatcher](https://github.com/AslamSys/mordomo-action-dispatcher)
-- [mordomo-skills-runner](https://github.com/AslamSys/mordomo-skills-runner)
 
 ---
 llm_cache_hits_total
@@ -523,8 +511,6 @@ llm_fallback_total{from, to}
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
 - [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
-- [mordomo-action-dispatcher](https://github.com/AslamSys/mordomo-action-dispatcher)
-- [mordomo-skills-runner](https://github.com/AslamSys/mordomo-skills-runner)
 
 ---
 llm_confidence_avg{model}
@@ -550,8 +536,6 @@ llm_intent_accuracy
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
 - [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
-- [mordomo-action-dispatcher](https://github.com/AslamSys/mordomo-action-dispatcher)
-- [mordomo-skills-runner](https://github.com/AslamSys/mordomo-skills-runner)
 
 ---
 actions_executed_total{type}
@@ -585,8 +569,6 @@ FROM python:3.11-slim
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
 - [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
-- [mordomo-action-dispatcher](https://github.com/AslamSys/mordomo-action-dispatcher)
-- [mordomo-skills-runner](https://github.com/AslamSys/mordomo-skills-runner)
 
 ---
 # Este container apenas se conecta ao Ollama via HTTP
@@ -609,8 +591,6 @@ FROM python:3.11-slim
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
 - [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
-- [mordomo-action-dispatcher](https://github.com/AslamSys/mordomo-action-dispatcher)
-- [mordomo-skills-runner](https://github.com/AslamSys/mordomo-skills-runner)
 
 ---
 
@@ -636,8 +616,6 @@ WORKDIR /app
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
 - [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
-- [mordomo-action-dispatcher](https://github.com/AslamSys/mordomo-action-dispatcher)
-- [mordomo-skills-runner](https://github.com/AslamSys/mordomo-skills-runner)
 
 ---
 COPY requirements.txt .
@@ -663,8 +641,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
 - [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
-- [mordomo-action-dispatcher](https://github.com/AslamSys/mordomo-action-dispatcher)
-- [mordomo-skills-runner](https://github.com/AslamSys/mordomo-skills-runner)
 
 ---
 RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')"
@@ -689,8 +665,6 @@ RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTr
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
 - [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
-- [mordomo-action-dispatcher](https://github.com/AslamSys/mordomo-action-dispatcher)
-- [mordomo-skills-runner](https://github.com/AslamSys/mordomo-skills-runner)
 
 ---
 COPY src/ ./src/
@@ -727,8 +701,6 @@ CMD ["python", "src/server.py"]
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
 - [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
-- [mordomo-action-dispatcher](https://github.com/AslamSys/mordomo-action-dispatcher)
-- [mordomo-skills-runner](https://github.com/AslamSys/mordomo-skills-runner)
 
 ---
 def test_local_llm_generation():
@@ -882,8 +854,6 @@ mordomo-brain:
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
 - [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
-- [mordomo-action-dispatcher](https://github.com/AslamSys/mordomo-action-dispatcher)
-- [mordomo-skills-runner](https://github.com/AslamSys/mordomo-skills-runner)
 
 ---
 # Instalar separadamente: curl https://ollama.ai/install.sh | sh
@@ -906,8 +876,6 @@ mordomo-brain:
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
 - [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
-- [mordomo-action-dispatcher](https://github.com/AslamSys/mordomo-action-dispatcher)
-- [mordomo-skills-runner](https://github.com/AslamSys/mordomo-skills-runner)
 
 ---
 # Baixar modelo: ollama pull qwen2.5:3b
@@ -930,8 +898,6 @@ mordomo-brain:
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
 - [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
-- [mordomo-action-dispatcher](https://github.com/AslamSys/mordomo-action-dispatcher)
-- [mordomo-skills-runner](https://github.com/AslamSys/mordomo-skills-runner)
 
 ---
 ```
@@ -962,8 +928,6 @@ mordomo-brain:
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
 - [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
-- [mordomo-action-dispatcher](https://github.com/AslamSys/mordomo-action-dispatcher)
-- [mordomo-skills-runner](https://github.com/AslamSys/mordomo-skills-runner)
 
 ---
 curl http://localhost:11434/api/tags
@@ -988,8 +952,6 @@ curl http://localhost:11434/api/tags
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
 - [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
-- [mordomo-action-dispatcher](https://github.com/AslamSys/mordomo-action-dispatcher)
-- [mordomo-skills-runner](https://github.com/AslamSys/mordomo-skills-runner)
 
 ---
 ollama pull qwen2.5:3b
@@ -1014,8 +976,6 @@ ollama pull qwen2.5:3b
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
 - [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
-- [mordomo-action-dispatcher](https://github.com/AslamSys/mordomo-action-dispatcher)
-- [mordomo-skills-runner](https://github.com/AslamSys/mordomo-skills-runner)
 
 ---
 ollama logs
@@ -1043,8 +1003,6 @@ ollama logs
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
 - [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
-- [mordomo-action-dispatcher](https://github.com/AslamSys/mordomo-action-dispatcher)
-- [mordomo-skills-runner](https://github.com/AslamSys/mordomo-skills-runner)
 
 ---
 ollama.model: "qwen2.5:3b"  # ao invés de 7b
@@ -1069,8 +1027,6 @@ ollama.model: "qwen2.5:3b"  # ao invés de 7b
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
 - [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
-- [mordomo-action-dispatcher](https://github.com/AslamSys/mordomo-action-dispatcher)
-- [mordomo-skills-runner](https://github.com/AslamSys/mordomo-skills-runner)
 
 ---
 ollama.num_predict: 256
@@ -1095,8 +1051,6 @@ ollama.num_predict: 256
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
 - [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
-- [mordomo-action-dispatcher](https://github.com/AslamSys/mordomo-action-dispatcher)
-- [mordomo-skills-runner](https://github.com/AslamSys/mordomo-skills-runner)
 
 ---
 strategy.local_timeout: 3000  # 3s
@@ -1124,8 +1078,6 @@ strategy.local_timeout: 3000  # 3s
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
 - [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
-- [mordomo-action-dispatcher](https://github.com/AslamSys/mordomo-action-dispatcher)
-- [mordomo-skills-runner](https://github.com/AslamSys/mordomo-skills-runner)
 
 ---
 echo $OPENAI_API_KEY
@@ -1150,8 +1102,6 @@ echo $OPENAI_API_KEY
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
 - [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
-- [mordomo-action-dispatcher](https://github.com/AslamSys/mordomo-action-dispatcher)
-- [mordomo-skills-runner](https://github.com/AslamSys/mordomo-skills-runner)
 
 ---
 # Adicionar retry com backoff
@@ -1174,8 +1124,6 @@ echo $OPENAI_API_KEY
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
 - [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
-- [mordomo-action-dispatcher](https://github.com/AslamSys/mordomo-action-dispatcher)
-- [mordomo-skills-runner](https://github.com/AslamSys/mordomo-skills-runner)
 
 ---
 ```
