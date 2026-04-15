@@ -9,6 +9,7 @@ import nats
 
 from src.config import NATS_URL, SUBJECT_GENERATE
 from src.handlers import handle_generate
+from src.rag import ensure_collection
 
 logging.basicConfig(
     level=logging.INFO,
@@ -32,6 +33,9 @@ async def run() -> None:
     nc = None
     while not _shutdown.is_set():
         try:
+            # Ensure Qdrant collection exists before accepting any messages
+            await ensure_collection()
+
             nc = await nats.connect(
                 NATS_URL,
                 name="mordomo-brain",

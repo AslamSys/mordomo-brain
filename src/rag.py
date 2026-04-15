@@ -7,9 +7,37 @@ from typing import Optional
 
 import httpx
 
-from src.config import QDRANT_URL, QDRANT_COLLECTION, RAG_ENABLED, RAG_TOP_K, RAG_MIN_SCORE, LITELLM_URL
+from src.config import (
+    QDRANT_URL, QDRANT_COLLECTION, QDRANT_VECTOR_SIZE,
+    RAG_ENABLED, RAG_TOP_K, RAG_MIN_SCORE, LITELLM_URL,
+)
 
 logger = logging.getLogger(__name__)
+
+
+async def ensure_collection() -> None:
+    """
+    Create the Qdrant collection on first run if it doesn't exist.
+    Called once at startup from main.py.
+    """
+    if not RAG_ENABLED:
+        return
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            # Check if collection exists
+            r = await client.get(f"{QDRANT_URL}/collections/{QDRANT_COLLECTION}")
+            if r.status_code == 200:
+                logger.info("Qdrant collection '%s' already exists", QDRANT_COLLECTION)
+                return
+            # Create it
+            r = await client.put(
+                f"{QDRANT_URL}/collections/{QDRANT_COLLECTION}",
+                json={"vectors": {"size": QDRANT_VECTOR_SIZE, "distance": "Cosine"}},
+            )
+            r.raise_for_status()
+            logger.info("Qdrant collection '%s' created (size=%d)", QDRANT_COLLECTION, QDRANT_VECTOR_SIZE)
+    except Exception as exc:
+        logger.warning("Could not ensure Qdrant collection (RAG may fail): %s", exc)
 
 
 async def _get_embedding(text: str) -> Optional[list[float]]:
