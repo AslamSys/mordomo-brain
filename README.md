@@ -16,7 +16,6 @@
 - [mordomo-orchestrator](https://github.com/AslamSys/mordomo-orchestrator)
 - [mordomo-tts-engine](https://github.com/AslamSys/mordomo-tts-engine)
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
-- [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
 
 ---
@@ -171,7 +170,6 @@ message Action {
 - [mordomo-orchestrator](https://github.com/AslamSys/mordomo-orchestrator)
 - [mordomo-tts-engine](https://github.com/AslamSys/mordomo-tts-engine)
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
-- [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
 
 ---
@@ -302,7 +300,6 @@ prompts:
 - [mordomo-orchestrator](https://github.com/AslamSys/mordomo-orchestrator)
 - [mordomo-tts-engine](https://github.com/AslamSys/mordomo-tts-engine)
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
-- [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
 
 ---
@@ -351,7 +348,6 @@ intents = {
 - [mordomo-orchestrator](https://github.com/AslamSys/mordomo-orchestrator)
 - [mordomo-tts-engine](https://github.com/AslamSys/mordomo-tts-engine)
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
-- [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
 
 ---
@@ -456,7 +452,6 @@ async def generate_response(request: GenerateRequest):
 - [mordomo-orchestrator](https://github.com/AslamSys/mordomo-orchestrator)
 - [mordomo-tts-engine](https://github.com/AslamSys/mordomo-tts-engine)
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
-- [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
 
 ---
@@ -483,7 +478,6 @@ llm_cost_usd{model}
 - [mordomo-orchestrator](https://github.com/AslamSys/mordomo-orchestrator)
 - [mordomo-tts-engine](https://github.com/AslamSys/mordomo-tts-engine)
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
-- [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
 
 ---
@@ -509,7 +503,6 @@ llm_fallback_total{from, to}
 - [mordomo-orchestrator](https://github.com/AslamSys/mordomo-orchestrator)
 - [mordomo-tts-engine](https://github.com/AslamSys/mordomo-tts-engine)
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
-- [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
 
 ---
@@ -534,7 +527,6 @@ llm_intent_accuracy
 - [mordomo-orchestrator](https://github.com/AslamSys/mordomo-orchestrator)
 - [mordomo-tts-engine](https://github.com/AslamSys/mordomo-tts-engine)
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
-- [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
 
 ---
@@ -567,7 +559,6 @@ FROM python:3.11-slim
 - [mordomo-orchestrator](https://github.com/AslamSys/mordomo-orchestrator)
 - [mordomo-tts-engine](https://github.com/AslamSys/mordomo-tts-engine)
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
-- [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
 
 ---
@@ -589,7 +580,6 @@ FROM python:3.11-slim
 - [mordomo-orchestrator](https://github.com/AslamSys/mordomo-orchestrator)
 - [mordomo-tts-engine](https://github.com/AslamSys/mordomo-tts-engine)
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
-- [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
 
 ---
@@ -614,7 +604,6 @@ WORKDIR /app
 - [mordomo-orchestrator](https://github.com/AslamSys/mordomo-orchestrator)
 - [mordomo-tts-engine](https://github.com/AslamSys/mordomo-tts-engine)
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
-- [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
 
 ---
@@ -639,7 +628,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 - [mordomo-orchestrator](https://github.com/AslamSys/mordomo-orchestrator)
 - [mordomo-tts-engine](https://github.com/AslamSys/mordomo-tts-engine)
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
-- [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
 
 ---
@@ -663,7 +651,6 @@ RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTr
 - [mordomo-orchestrator](https://github.com/AslamSys/mordomo-orchestrator)
 - [mordomo-tts-engine](https://github.com/AslamSys/mordomo-tts-engine)
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
-- [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
 
 ---
@@ -699,7 +686,6 @@ CMD ["python", "src/server.py"]
 - [mordomo-orchestrator](https://github.com/AslamSys/mordomo-orchestrator)
 - [mordomo-tts-engine](https://github.com/AslamSys/mordomo-tts-engine)
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
-- [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
 
 ---
@@ -852,7 +838,6 @@ mordomo-brain:
 - [mordomo-orchestrator](https://github.com/AslamSys/mordomo-orchestrator)
 - [mordomo-tts-engine](https://github.com/AslamSys/mordomo-tts-engine)
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
-- [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
 
 ---
@@ -874,7 +859,6 @@ mordomo-brain:
 - [mordomo-orchestrator](https://github.com/AslamSys/mordomo-orchestrator)
 - [mordomo-tts-engine](https://github.com/AslamSys/mordomo-tts-engine)
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
-- [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
 
 ---
@@ -896,7 +880,6 @@ mordomo-brain:
 - [mordomo-orchestrator](https://github.com/AslamSys/mordomo-orchestrator)
 - [mordomo-tts-engine](https://github.com/AslamSys/mordomo-tts-engine)
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
-- [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
 
 ---
@@ -926,7 +909,6 @@ mordomo-brain:
 - [mordomo-orchestrator](https://github.com/AslamSys/mordomo-orchestrator)
 - [mordomo-tts-engine](https://github.com/AslamSys/mordomo-tts-engine)
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
-- [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
 
 ---
@@ -950,7 +932,6 @@ curl http://localhost:11434/api/tags
 - [mordomo-orchestrator](https://github.com/AslamSys/mordomo-orchestrator)
 - [mordomo-tts-engine](https://github.com/AslamSys/mordomo-tts-engine)
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
-- [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
 
 ---
@@ -974,7 +955,6 @@ ollama pull qwen2.5:3b
 - [mordomo-orchestrator](https://github.com/AslamSys/mordomo-orchestrator)
 - [mordomo-tts-engine](https://github.com/AslamSys/mordomo-tts-engine)
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
-- [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
 
 ---
@@ -1001,7 +981,6 @@ ollama logs
 - [mordomo-orchestrator](https://github.com/AslamSys/mordomo-orchestrator)
 - [mordomo-tts-engine](https://github.com/AslamSys/mordomo-tts-engine)
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
-- [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
 
 ---
@@ -1025,7 +1004,6 @@ ollama.model: "qwen2.5:3b"  # ao invés de 7b
 - [mordomo-orchestrator](https://github.com/AslamSys/mordomo-orchestrator)
 - [mordomo-tts-engine](https://github.com/AslamSys/mordomo-tts-engine)
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
-- [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
 
 ---
@@ -1049,7 +1027,6 @@ ollama.num_predict: 256
 - [mordomo-orchestrator](https://github.com/AslamSys/mordomo-orchestrator)
 - [mordomo-tts-engine](https://github.com/AslamSys/mordomo-tts-engine)
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
-- [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
 
 ---
@@ -1076,7 +1053,6 @@ strategy.local_timeout: 3000  # 3s
 - [mordomo-orchestrator](https://github.com/AslamSys/mordomo-orchestrator)
 - [mordomo-tts-engine](https://github.com/AslamSys/mordomo-tts-engine)
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
-- [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
 
 ---
@@ -1100,7 +1076,6 @@ echo $OPENAI_API_KEY
 - [mordomo-orchestrator](https://github.com/AslamSys/mordomo-orchestrator)
 - [mordomo-tts-engine](https://github.com/AslamSys/mordomo-tts-engine)
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
-- [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
 
 ---
@@ -1122,7 +1097,6 @@ echo $OPENAI_API_KEY
 - [mordomo-orchestrator](https://github.com/AslamSys/mordomo-orchestrator)
 - [mordomo-tts-engine](https://github.com/AslamSys/mordomo-tts-engine)
 - [mordomo-system-watchdog](https://github.com/AslamSys/mordomo-system-watchdog)
-- [mordomo-dashboard-ui](https://github.com/AslamSys/mordomo-dashboard-ui)
 - [mordomo-openclaw-agent](https://github.com/AslamSys/mordomo-openclaw-agent)
 
 ---
