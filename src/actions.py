@@ -1,29 +1,19 @@
 """
-Action extraction from LLM response.
-The LLM is instructed to append [ACTION: {...}] for detectable intents.
+Action extraction from LLM response tool_calls.
+
+With function calling, the LLM returns structured tool_calls directly in the
+response — no regex, no parsing, no brittle text manipulation.
+The extraction is done inside llm.py (_extract_tool_calls); this module
+exists as a thin compatibility layer for handlers.py.
+
+The old [ACTION:{...}] regex approach has been removed entirely.
 """
-import json
-import logging
-import re
-from typing import Optional
-
-logger = logging.getLogger(__name__)
-
-_ACTION_RE = re.compile(r"\[ACTION:\s*(\{.*?\})\]", re.DOTALL)
+from src.llm import LLMResponse
 
 
-def extract_actions(text: str) -> tuple[str, list[dict]]:
+def extract_actions(llm_response: LLMResponse) -> tuple[str, list[dict]]:
     """
-    Parse [ACTION: {...}] tags from LLM response.
-    Returns (clean_text_without_action_tags, list_of_action_dicts).
+    Returns (response_text, actions) from an LLMResponse.
+    Actions come directly from tool_calls — already structured, no parsing needed.
     """
-    actions = []
-    for match in _ACTION_RE.finditer(text):
-        try:
-            action = json.loads(match.group(1))
-            actions.append(action)
-        except json.JSONDecodeError as e:
-            logger.warning("Failed to parse action JSON: %s — %s", match.group(1), e)
-
-    clean_text = _ACTION_RE.sub("", text).strip()
-    return clean_text, actions
+    return llm_response.text, llm_response.tool_calls

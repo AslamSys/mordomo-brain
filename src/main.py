@@ -10,6 +10,8 @@ import nats
 from src.config import NATS_URL, SUBJECT_GENERATE
 from src.handlers import handle_generate
 from src.rag import ensure_collection
+from src.tiers import init_tiers
+from src.tools import init_tools
 
 logging.basicConfig(
     level=logging.INFO,
@@ -35,6 +37,12 @@ async def run() -> None:
         try:
             # Ensure Qdrant collection exists before accepting any messages
             await ensure_collection()
+
+            # Warm tier cache — discovers available tiers from the LiteLLM gateway
+            await init_tiers()
+
+            # Seed + warm tool registry — discovers capabilities from Redis
+            await init_tools()
 
             nc = await nats.connect(
                 NATS_URL,
