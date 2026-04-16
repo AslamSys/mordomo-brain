@@ -15,7 +15,7 @@ import redis.asyncio as aioredis
 
 from src.config import (
     REDIS_URL, CONTEXT_MAX_MESSAGES, CONTEXT_TTL_SECONDS,
-    CONTEXT_SUMMARIZE_KEEP, LITELLM_URL, MODEL_SIMPLE,
+    CONTEXT_SUMMARIZE_KEEP, LITELLM_URL, TIER_FALLBACK,
     GROQ_API_KEY, GROQ_URL, GROQ_MODEL,
 )
 
@@ -52,7 +52,7 @@ async def _summarize_messages(messages: list[dict]) -> str:
         {"role": "system",  "content": system},
         {"role": "user",    "content": conversation_text},
     ]
-    payload = {"model": MODEL_SIMPLE, "messages": payload_messages, "max_tokens": 200, "temperature": 0.3}
+    payload = {"model": TIER_FALLBACK, "messages": payload_messages, "max_tokens": 200, "temperature": 0.3}
 
     # Try LiteLLM gateway
     try:
