@@ -6,18 +6,20 @@ Core cognitivo do Mordomo. Recebe texto via NATS, classifica risco/complexidade 
 
 ## Arquitetura atual
 
-### Fase 1 - Classificacao (Groq direto)
+### Fase 1 - Classificacao (Bifrost → Groq)
 
-- Endpoint: `https://api.groq.com/openai/v1/chat/completions`
+- Endpoint primario: `BIFROST_URL/v1/chat/completions` (roteia para Groq)
+- Fallback: Groq direto (`https://api.groq.com/openai/v1/chat/completions`)
 - Modelo padrao: `llama-3.3-70b-versatile`
 - Saida: `tier` semantico (`simple`, `brain`, `stakes`) + `intents`
 
-### Fase 2 - Geracao (Bifrost)
+### Fase 2 - Geracao (Bifrost, com streaming)
 
-- Endpoint: `BIFROST_URL/v1/chat/completions`
+- Endpoint: `BIFROST_URL/v1/chat/completions` (SSE streaming)
 - O brain resolve `tier` -> `provider/model` consultando Redis db1
+- Streaming: frases sao publicadas via NATS (`mordomo.tts.stream.{speaker_id}`) conforme chegam do LLM
 - Fallback por request enviado no payload (`fallbacks`)
-- Em falha total do gateway, usa Groq direto em modo degradado (sem function calling)
+- Em falha total do gateway, usa Groq direto em modo degradado (sem function calling, sem streaming)
 
 ### RAG (Qdrant + embeddings via Bifrost)
 
@@ -58,6 +60,7 @@ Observacao importante:
 
 - Reply: `response_text`, `model_used`, `tokens_used`, `actions`, `tier`, `intents`
 - Publish de acoes: `mordomo.brain.action.{type}`
+- Streaming de frases: `mordomo.tts.stream.{speaker_id}` (cada frase conforme chega do LLM)
 
 ## Variaveis de ambiente relevantes
 

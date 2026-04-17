@@ -16,7 +16,9 @@ Fallback chain for phase 2:
 """
 import json
 import logging
+import re
 from dataclasses import dataclass, field
+from typing import AsyncIterator
 
 import httpx
 
@@ -67,35 +69,37 @@ Response format: {"tier": "<tier_name>", "intents": ["intent1", "intent2"]}"""
 
 async def classify(text: str, tiers: list[str]) -> ClassifyResult:
     """
-    Phase 1 — Call Groq directly to classify risk tier and intents.
-    Groq is always used here: free, fast (~200ms), no gateway dependency.
-    Falls back to TIER_FALLBACK if Groq is unavailable.
+    Phase 1 — Classify risk tier and intents via Bifrost (Groq backend).
+    Falls back to direct Groq if Bifrost is unavailable, then to TIER_FALLBACK.
     """
-    if not GROQ_API_KEY:
-        logger.warning("GROQ_API_KEY not set — skipping classification, using fallback tier")
-        return ClassifyResult(tier=TIER_FALLBACK, intents=["unknown"])
-
     user_prompt = (
         f"Available tiers: {tiers}\n\n"
         f"User message: \"{text}\"\n\n"
         "Classify and respond with JSON only."
     )
+    messages = [
+        {"role": "system", "content": _CLASSIFY_SYSTEM},
+        {"role": "user",   "content": user_prompt},
+    ]
+    payload = {
+        "model": GROQ_MODEL,
+        "messages": messages,
+        "max_tokens": 128,
+        "temperature": 0,
+        "response_format": {"type": "json_object"},
+    }
 
+    # 1. Try Bifrost gateway (routes to Groq via config)
     try:
+        headers = {"Content-Type": "application/json"}
+        if BIFROST_API_KEY:
+            headers["Authorization"] = f"Bearer {BIFROST_API_KEY}"
+
         async with httpx.AsyncClient(timeout=10) as client:
             resp = await client.post(
-                f"{GROQ_URL}/chat/completions",
-                headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
-                json={
-                    "model": GROQ_MODEL,
-                    "messages": [
-                        {"role": "system", "content": _CLASSIFY_SYSTEM},
-                        {"role": "user",   "content": user_prompt},
-                    ],
-                    "max_tokens": 128,
-                    "temperature": 0,
-                    "response_format": {"type": "json_object"},
-                },
+                f"{BIFROST_URL}/v1/chat/completions",
+                headers=headers,
+                json=payload,
             )
             resp.raise_for_status()
             data = resp.json()
@@ -105,12 +109,41 @@ async def classify(text: str, tiers: list[str]) -> ClassifyResult:
             tier = parsed.get("tier", TIER_FALLBACK)
             intents = parsed.get("intents", [])
 
-            # Safety: tier must be one of the known tiers
             if tier not in tiers:
                 logger.warning("Classifier returned unknown tier '%s', falling back to '%s'", tier, TIER_FALLBACK)
                 tier = TIER_FALLBACK
 
-            logger.info("Classified [tier=%s intents=%s]", tier, intents)
+            logger.info("Classified via Bifrost [tier=%s intents=%s]", tier, intents)
+            return ClassifyResult(tier=tier, intents=intents)
+
+    except Exception as exc:
+        logger.warning("Bifrost classify failed: %s — trying Groq direct", exc)
+
+    # 2. Fallback: direct Groq
+    if not GROQ_API_KEY:
+        logger.warning("GROQ_API_KEY not set — using fallback tier")
+        return ClassifyResult(tier=TIER_FALLBACK, intents=["unknown"])
+
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.post(
+                f"{GROQ_URL}/chat/completions",
+                headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
+                json=payload,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            raw = data["choices"][0]["message"]["content"]
+            parsed = json.loads(raw)
+
+            tier = parsed.get("tier", TIER_FALLBACK)
+            intents = parsed.get("intents", [])
+
+            if tier not in tiers:
+                logger.warning("Classifier returned unknown tier '%s', falling back to '%s'", tier, TIER_FALLBACK)
+                tier = TIER_FALLBACK
+
+            logger.info("Classified via Groq direct [tier=%s intents=%s]", tier, intents)
             return ClassifyResult(tier=tier, intents=intents)
 
     except Exception as exc:
@@ -237,3 +270,152 @@ async def generate(
 
     # 2. Groq direct — degraded mode, no structured actions
     return await _call_groq_fallback(messages)
+
+
+# ── Sentence splitter for streaming ────────────────────────────────────────
+
+_SENTENCE_END = re.compile(r'(?<=[.!?…])\s+|(?<=\n)')
+
+
+@dataclass
+class StreamChunk:
+    """A sentence or partial text emitted during streaming."""
+    text: str
+    is_final: bool = False
+    tool_calls: list[dict] | None = None
+    model_used: str = ""
+    tokens_used: int = 0
+
+
+async def generate_stream(
+    user_text: str,
+    history: list[dict],
+    rag_context: list[str],
+    tier: str,
+) -> AsyncIterator[StreamChunk]:
+    """
+    Phase 2 (streaming) — Stream response sentence by sentence via SSE.
+    Yields StreamChunk for each complete sentence. Final chunk has is_final=True
+    and includes tool_calls + usage metadata.
+
+    Falls back to non-streaming generate() if SSE fails.
+    """
+    messages = _build_messages(user_text, history, rag_context)
+
+    model, fallback_model = await resolve_tier(tier)
+    if not model:
+        raise RuntimeError(f"No model configured for tier '{tier}'")
+
+    tools = await get_tools()
+    headers = {"Content-Type": "application/json"}
+    if BIFROST_API_KEY:
+        headers["Authorization"] = f"Bearer {BIFROST_API_KEY}"
+
+    payload = {
+        "model": model,
+        "messages": messages,
+        "tools": tools,
+        "tool_choice": "auto",
+        "max_tokens": 1024,
+        "temperature": 0.7,
+        "stream": True,
+    }
+    if fallback_model and fallback_model != model:
+        payload["fallbacks"] = [fallback_model]
+
+    try:
+        async with httpx.AsyncClient(timeout=60) as client:
+            async with client.stream(
+                "POST",
+                f"{BIFROST_URL}/v1/chat/completions",
+                headers=headers,
+                json=payload,
+            ) as resp:
+                resp.raise_for_status()
+                buffer = ""
+                all_text = ""
+                tool_call_deltas: dict[int, dict] = {}
+                model_used = model
+                tokens_used = 0
+
+                async for line in resp.aiter_lines():
+                    if not line.startswith("data: "):
+                        continue
+                    data_str = line[6:]
+                    if data_str.strip() == "[DONE]":
+                        break
+
+                    try:
+                        data = json.loads(data_str)
+                    except json.JSONDecodeError:
+                        continue
+
+                    # Track usage if present
+                    if "usage" in data:
+                        tokens_used = data["usage"].get("total_tokens", tokens_used)
+                    if "model" in data:
+                        model_used = data["model"]
+
+                    delta = data.get("choices", [{}])[0].get("delta", {})
+
+                    # Accumulate tool call deltas
+                    for tc in delta.get("tool_calls", []):
+                        idx = tc.get("index", 0)
+                        if idx not in tool_call_deltas:
+                            tool_call_deltas[idx] = {"function": {"name": "", "arguments": ""}}
+                        fn = tc.get("function", {})
+                        if "name" in fn:
+                            tool_call_deltas[idx]["function"]["name"] = fn["name"]
+                        if "arguments" in fn:
+                            tool_call_deltas[idx]["function"]["arguments"] += fn["arguments"]
+
+                    # Accumulate text content
+                    content = delta.get("content", "")
+                    if not content:
+                        continue
+
+                    buffer += content
+                    all_text += content
+
+                    # Split on sentence boundaries and yield complete sentences
+                    parts = _SENTENCE_END.split(buffer)
+                    if len(parts) > 1:
+                        # All except last are complete sentences
+                        for sentence in parts[:-1]:
+                            sentence = sentence.strip()
+                            if sentence:
+                                yield StreamChunk(text=sentence, model_used=model_used)
+                        buffer = parts[-1]
+
+                # Yield remaining buffer as final chunk
+                final_text = buffer.strip()
+                tool_calls = []
+                for _idx, tc in sorted(tool_call_deltas.items()):
+                    fn = tc["function"]
+                    try:
+                        args = json.loads(fn["arguments"])
+                    except json.JSONDecodeError:
+                        args = {}
+                    tool_calls.append({"type": fn["name"], **args})
+
+                yield StreamChunk(
+                    text=final_text,
+                    is_final=True,
+                    tool_calls=tool_calls,
+                    model_used=model_used,
+                    tokens_used=tokens_used,
+                )
+                return
+
+    except Exception as exc:
+        logger.warning("Streaming failed: %s — falling back to non-streaming", exc)
+
+    # Fallback: non-streaming generate
+    resp = await generate(user_text, history, rag_context, tier)
+    yield StreamChunk(
+        text=resp.text,
+        is_final=True,
+        tool_calls=[{"type": tc.get("type", "unknown"), **{k: v for k, v in tc.items() if k != "type"}} for tc in resp.tool_calls],
+        model_used=resp.model_used,
+        tokens_used=resp.tokens_used,
+    )
