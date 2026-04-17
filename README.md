@@ -1,216 +1,91 @@
-﻿# 🧠 mordomo-brain
+# mordomo-brain
 
-## 🔗 Navegação
+## Proposito
 
-**[🏠 AslamSys](https://github.com/AslamSys)** → **[📚 _system](https://github.com/AslamSys/_system)** → **[📂 Aslam (Orange Pi 5 16GB)](https://github.com/AslamSys/_system/blob/main/hardware/mordomo%20-%20(orange-pi-5-16gb)/README.md)** → **mordomo-brain**
+Core cognitivo do Mordomo. Recebe texto via NATS, classifica risco/complexidade (fase 1), gera resposta com tools (fase 2), persiste contexto e publica acoes estruturadas.
 
-### Containers Relacionados (aslam)
-- [mordomo-orchestrator](https://github.com/AslamSys/mordomo-orchestrator)
-- [mordomo-tts-engine](https://github.com/AslamSys/mordomo-tts-engine)
-- [mordomo-people](https://github.com/AslamSys/mordomo-people)
-- [mordomo-vault](https://github.com/AslamSys/mordomo-vault)
-- [infra/llm-gateway](https://github.com/AslamSys/mordomo-deploy) — LiteLLM proxy
-- [infra/redis](https://github.com/AslamSys/mordomo-deploy) — db1 (sessions + tools + routes)
-- [infra/qdrant](https://github.com/AslamSys/mordomo-deploy) — RAG
+## Arquitetura atual
 
----
+### Fase 1 - Classificacao (Groq direto)
 
-**Container:** `mordomo-brain`  
-**Ecossistema:** Brain  
-**Hardware:** Orange Pi 5 Ultra  
-**Linguagem:** Python 3.11 (asyncio + nats-py)
+- Endpoint: `https://api.groq.com/openai/v1/chat/completions`
+- Modelo padrao: `llama-3.3-70b-versatile`
+- Saida: `tier` semantico (`simple`, `brain`, `stakes`) + `intents`
 
----
+### Fase 2 - Geracao (Bifrost)
 
-## 📋 Propósito
+- Endpoint: `BIFROST_URL/v1/chat/completions`
+- O brain resolve `tier` -> `provider/model` consultando Redis db1
+- Fallback por request enviado no payload (`fallbacks`)
+- Em falha total do gateway, usa Groq direto em modo degradado (sem function calling)
 
-LLM cognitive core do Mordomo. Recebe texto transcrito via NATS (request/reply), executa classificação em 2 fases, retorna resposta + ações estruturadas.
+### RAG (Qdrant + embeddings via Bifrost)
 
----
+- Embedding endpoint: `BIFROST_URL/v1/embeddings`
+- Modelo de embedding: `EMBEDDING_MODEL` (default `gemini/text-embedding-004`)
+- Colecao Qdrant: `QDRANT_COLLECTION` (default `mordomo_conversations`)
 
-## 🎯 Responsabilidades
+## Redis db1
 
-- Classificar intenção e tier de complexidade (Fase 1 — Groq, ~200ms)
-- Gerar resposta com function calling (Fase 2 — LiteLLM gateway)
-- Carregar ferramentas disponíveis do Redis (`mordomo:tools`)
-- Descobrir tiers disponíveis do LiteLLM (`/models`)
-- Manter contexto de conversa por speaker (Redis db1, `brain:ctx:{speaker_id}`)
-- RAG via Qdrant para contexto semântico relevante
+### Chaves usadas pelo brain
 
----
+- `brain:context:{speaker_id}`: historico da conversa
+- `mordomo:tools`: registry de tools (lido pelo brain)
+- `mordomo:tiers`: mapping tier semantico -> provider/model
+- `mordomo:tiers:fallbacks`: mapping tier semantico -> provider/model fallback
 
-## 🔌 Interface NATS
+Observacao importante:
 
-### Entrada (request/reply)
+- O seed de `mordomo:tiers*` nao e responsabilidade do brain.
+- O seed e feito pelo fluxo de deploy (`mordomo-deploy/infra/redis/seed-brain-tiers.sh`).
 
-```
-Subject: mordomo.brain.generate
+## NATS
 
-Payload:
+### Entrada
+
+- Subject: `mordomo.brain.generate`
+- Payload esperado:
+
+```json
 {
   "speaker_id": "user_1",
-  "text":       "acende a luz da sala",
+  "text": "acende a luz da sala",
   "confidence": 0.97
 }
-
-Reply:
-{
-  "text":        "Pronto, luz da sala acesa!",
-  "tier":        "mordomo-simple",
-  "intents":     ["iot_control"],
-  "actions":     [{"type":"iot_control","device_id":"luz_sala","command":"turn_on"}],
-  "tokens_used": 312
-}
 ```
 
-### Saída (publish)
+### Saida
 
-```
-Subject: mordomo.brain.action.{action_type}
+- Reply: `response_text`, `model_used`, `tokens_used`, `actions`, `tier`, `intents`
+- Publish de acoes: `mordomo.brain.action.{type}`
 
-Exemplo: mordomo.brain.action.iot_control
-Payload:
-{
-  "speaker_id": "user_1",
-  "device_id":  "luz_sala",
-  "command":    "turn_on"
-}
-```
+## Variaveis de ambiente relevantes
 
----
+- `NATS_URL`
+- `REDIS_URL`
+- `QDRANT_URL`
+- `QDRANT_COLLECTION`
+- `QDRANT_VECTOR_SIZE` (default 768)
+- `RAG_ENABLED`
+- `RAG_TOP_K`
+- `RAG_MIN_SCORE`
+- `BIFROST_URL`
+- `BIFROST_API_KEY`
+- `EMBEDDING_MODEL`
+- `GROQ_API_KEY`
+- `GROQ_MODEL`
+- `TIER_FALLBACK`
+- `TIER_CACHE_TTL`
+- `TIER_STRICT_MODE`
+- `TOOLS_CACHE_TTL`
 
-## 🔁 Arquitetura em 2 Fases
+## Fluxo resumido
 
-### Fase 1 — Classificação (Groq direct, ~200ms)
-
-Chama `llama-3.3-70b-versatile` diretamente via API Groq para:
-- Determinar o **tier** de complexidade da resposta
-- Extrair **intents** da mensagem
-
-```python
-# src/llm.py
-class ClassifyResult(TypedDict):
-    tier:    str        # "mordomo-simple" | "mordomo-complex" | "mordomo-brain" | "mordomo-stakes"
-    intents: list[str]  # ["iot_control", "pix_send", ...]
-```
-
-**Tiers e modelos correspondentes** (configurados no LiteLLM):
-
-| Tier | Uso | Modelo |
-|---|---|---|
-| `mordomo-simple` | Comandos simples, IoT, lembretes | Gemini 3 Flash Preview |
-| `mordomo-complex` | Raciocínio multi-etapa, contexto longo | Claude Haiku 4.5 |
-| `mordomo-brain` | Respostas elaboradas, casa inteligente | Claude Sonnet 4.6 |
-| `mordomo-stakes` | Ações com efeito real (PIX, alarmes) | Gemini 3 Pro Preview |
-
-### Fase 2 — Geração com Function Calling (LiteLLM gateway)
-
-Usa o tier determinado na Fase 1 como `model` no LiteLLM, com:
-- Ferramentas carregadas do Redis (`mordomo:tools`)
-- Histórico de conversa do Redis (`brain:ctx:{speaker_id}`)
-- Contexto semântico do Qdrant (RAG, top-5 relevantes)
-
-```python
-# src/llm.py
-async def generate(text, speaker_id, tier, tools) -> GenerateResult
-```
-
----
-
-## 🔧 Ferramentas Dinâmicas (Redis)
-
-**Chave Redis:** `mordomo:tools` (HSET — campo = nome da ferramenta, valor = JSON do schema)
-
-**Seed inicial** (7 ferramentas, via HSETNX):
-
-| Ferramenta | Ação |
-|---|---|
-| `iot_control` | Controlar dispositivos IoT (liga/desliga/dimmer/temperatura) |
-| `alarm_control` | Armar/desarmar alarme de segurança |
-| `media_control` | Controlar TV/streaming (ligar, pausar, volume) |
-| `pix_send` | Transferência PIX |
-| `balance_query` | Consultar saldo bancário |
-| `reminder_create` | Criar lembrete com data/hora |
-| `openclaw_execute` | Enviar comando para agente OpenClaw |
-
-```bash
-# Adicionar nova ferramenta em runtime (sem restart)
-redis-cli -n 1 HSET mordomo:tools nova_ferramenta '{"name":"nova_ferramenta","description":"...","parameters":{}}'
-```
-
----
-
-## 🎚️ Tiers Dinâmicos
-
-Os tiers são descobertos via `GET /models` do LiteLLM gateway, filtrados pelo prefixo `mordomo-`. Cache TTL 300s.
-
-Se o tier retornado pela Fase 1 não existir mais no LiteLLM, usa `TIER_FALLBACK = "mordomo-simple"`.
-
----
-
-## ⚙️ Configuração (Variáveis de Ambiente)
-
-| Variável | Default | Descrição |
-|---|---|---|
-| `NATS_URL` | `nats://nats:4222` | Servidor NATS |
-| `REDIS_URL` | `redis://redis:6379/1` | Redis db1 |
-| `QDRANT_URL` | `http://qdrant:6333` | Qdrant RAG |
-| `LITELLM_URL` | `http://llm-gateway:4000` | LiteLLM gateway |
-| `LITELLM_MASTER_KEY` | — | API key do LiteLLM |
-| `GROQ_API_KEY` | — | API key Groq (Fase 1) |
-| `TIER_PREFIX` | `mordomo-` | Prefixo para filtrar tiers no LiteLLM |
-| `TIER_FALLBACK` | `mordomo-simple` | Tier usado se o escolhido indisponível |
-| `TIER_CACHE_TTL` | `300` | TTL (segundos) do cache de tiers |
-| `TOOLS_CACHE_TTL` | `120` | TTL (segundos) do cache de ferramentas |
-
----
-
-## 🗂️ Estrutura de Arquivos
-
-```
-src/
-  config.py        # Variáveis de ambiente e constantes
-  llm.py           # Cliente LLM — classify() + generate()
-  tools.py         # Carrega mordomo:tools do Redis com cache
-  tools_seed.py    # Seed inicial das 7 ferramentas (HSETNX)
-  tiers.py         # Descobre tiers via LiteLLM /models com cache
-  actions.py       # extract_actions(llm_response) -> (text, tool_calls)
-  handlers.py      # handle_generate(): orquestra phases 1+2, publica ações
-  main.py          # Conecta NATS, init_tiers(), init_tools(), subscribe
-```
-
----
-
-## 💾 Uso do Redis (db1)
-
-| Chave | Tipo | TTL | Conteúdo |
-|---|---|---|---|
-| `brain:ctx:{speaker_id}` | String (JSON) | `CTX_TTL` | Histórico de conversa (messages[]) |
-| `mordomo:tools` | Hash | 120s | Schemas das ferramentas disponíveis |
-| `mordomo:routes` | Hash | 120s | Rotas de ação (usado pelo orchestrator) |
-
----
-
-## 🔄 Fluxo Completo
-
-```
-[orchestrator] mordomo.brain.generate (req/reply)
-       ↓
-[brain] Fase 1: Groq classify → {tier, intents}
-       ↓
-[brain] Fase 2: LiteLLM generate (tier, tools, ctx, RAG)
-       ↓
-[brain] extract_actions → (response_text, tool_calls[])
-       ↓
-[brain] publish mordomo.brain.action.{type} para cada ação
-       ↓
-[brain] reply {text, tier, intents, actions, tokens_used}
-```
-
----
-
-## 🚀 CI/CD
-
-Build automático via GitHub Actions → `ghcr.io/aslamsys/mordomo-brain:latest`
-
-Workflow: [`.github/workflows/ci.yml`](.github/workflows/ci.yml) — usa reusable workflow `AslamSys/.github`
+1. `handle_generate` recebe texto e speaker
+2. Busca historico (Redis) e contexto RAG (Qdrant)
+3. Classifica tier/intents com Groq
+4. Resolve tier no Redis para modelo real
+5. Chama Bifrost com tools + fallback model
+6. Persiste contexto e upsert no Qdrant
+7. Publica acoes em `mordomo.brain.action.*`
+8. Responde ao solicitante via reply NATS

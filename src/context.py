@@ -15,9 +15,10 @@ import redis.asyncio as aioredis
 
 from src.config import (
     REDIS_URL, CONTEXT_MAX_MESSAGES, CONTEXT_TTL_SECONDS,
-    CONTEXT_SUMMARIZE_KEEP, LITELLM_URL, TIER_FALLBACK,
+    CONTEXT_SUMMARIZE_KEEP, BIFROST_URL, BIFROST_API_KEY, TIER_FALLBACK,
     GROQ_API_KEY, GROQ_URL, GROQ_MODEL,
 )
+from src.tiers import resolve_tier
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +39,7 @@ def _key(speaker_id: str) -> str:
 async def _summarize_messages(messages: list[dict]) -> str:
     """
     Ask the LLM to summarize a list of messages into a compact paragraph.
-    Tries LiteLLM gateway first, then Groq direct.
+    Tries Bifrost gateway first, then Groq direct.
     """
     system = (
         "Você é um assistente de memória. Resuma a conversa abaixo em até 5 frases "
@@ -52,16 +53,26 @@ async def _summarize_messages(messages: list[dict]) -> str:
         {"role": "system",  "content": system},
         {"role": "user",    "content": conversation_text},
     ]
-    payload = {"model": TIER_FALLBACK, "messages": payload_messages, "max_tokens": 200, "temperature": 0.3}
+    summary_model, _ = await resolve_tier(TIER_FALLBACK)
+    payload = {
+        "model": summary_model or "gemini/gemini-2.0-flash",
+        "messages": payload_messages,
+        "max_tokens": 200,
+        "temperature": 0.3,
+    }
 
-    # Try LiteLLM gateway
+    # Try Bifrost gateway
+    headers = {"Content-Type": "application/json"}
+    if BIFROST_API_KEY:
+        headers["Authorization"] = f"Bearer {BIFROST_API_KEY}"
+
     try:
         async with httpx.AsyncClient(timeout=20) as client:
-            resp = await client.post(f"{LITELLM_URL}/chat/completions", json=payload)
+            resp = await client.post(f"{BIFROST_URL}/v1/chat/completions", headers=headers, json=payload)
             resp.raise_for_status()
             return resp.json()["choices"][0]["message"]["content"]
     except Exception as exc:
-        logger.warning("LiteLLM summarization failed: %s — trying Groq direct", exc)
+        logger.warning("Bifrost summarization failed: %s — trying Groq direct", exc)
 
     # Fallback: Groq direct
     if GROQ_API_KEY:

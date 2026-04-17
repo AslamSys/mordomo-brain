@@ -53,7 +53,7 @@ async def handle_generate(msg: Msg) -> None:
 
     # 2. Phase 1 — classify tier semantically via Groq (free, ~200ms)
     tiers = await get_tiers()
-    classification = await classify(text, tiers)
+    classification = await classify(text, list(tiers.keys()))
 
     # 3. Phase 2 — generate response with function calling on chosen tier
     try:

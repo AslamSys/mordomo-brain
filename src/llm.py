@@ -2,16 +2,16 @@
 LLM client — 2-phase architecture.
 
 Phase 1 — Classification (Groq, always, free):
-  Receives the user text + available tiers from gateway.
-  Returns: { tier: "mordomo-stakes", intents: ["pix_send", "iot_control"] }
+    Receives the user text + available semantic tiers.
+    Returns: { tier: "stakes", intents: ["pix_send", "iot_control"] }
   This is semantic classification — no keyword matching.
 
-Phase 2 — Generation (chosen tier via LiteLLM gateway, with function calling):
+Phase 2 — Generation (chosen tier via Bifrost gateway, with function calling):
   Receives text + history + RAG context + tools definition.
   Returns: response_text + tool_calls (structured actions, no regex parsing needed).
 
 Fallback chain for phase 2:
-  1. LiteLLM gateway (handles provider rotation + its own fallbacks internally)
+    1. Bifrost gateway (resolved model + per-request fallback)
   2. Groq direct without tools (last resort — graceful degradation)
 """
 import json
@@ -21,10 +21,11 @@ from dataclasses import dataclass, field
 import httpx
 
 from src.config import (
-    LITELLM_URL, LITELLM_MASTER_KEY,
+    BIFROST_URL, BIFROST_API_KEY,
     GROQ_API_KEY, GROQ_URL, GROQ_MODEL,
     SYSTEM_PROMPT, TIER_FALLBACK,
 )
+from src.tiers import resolve_tier
 from src.tools import get_tools
 
 logger = logging.getLogger(__name__)
@@ -51,10 +52,10 @@ Given a user message and a list of available LLM tiers, determine:
 1. Which tier should handle this request (choose the minimum necessary tier)
 2. Which intents/actions are present
 
-Tier guidance (tiers are listed from cheapest/fastest to most capable):
-- Tiers ending in 'simple': short commands, IoT control, reminders, quick questions
-- Tiers ending in 'complex': multi-step reasoning, analysis, long context, comparisons
-- Tiers ending in 'stakes': financial transactions (sending money), security credentials, alarms, anything irreversible
+Tier guidance:
+- simple: short commands, IoT control, reminders, quick questions
+- brain: multi-step reasoning, analysis, long context, comparisons
+- stakes: financial transactions (sending money), security credentials, alarms, anything irreversible
 
 Rules:
 - When multiple intents are present, use the tier of the HIGHEST risk intent
@@ -148,26 +149,29 @@ def _extract_tool_calls(choice: dict) -> list[dict]:
     return actions
 
 
-async def _call_litellm_with_tools(tier: str, messages: list[dict]) -> LLMResponse:
-    """Call LiteLLM gateway with function calling enabled. Raises on failure."""
+async def _call_bifrost_with_tools(model: str, fallback_model: str, messages: list[dict]) -> LLMResponse:
+    """Call Bifrost gateway with function calling enabled. Raises on failure."""
     headers = {"Content-Type": "application/json"}
-    if LITELLM_MASTER_KEY:
-        headers["Authorization"] = f"Bearer {LITELLM_MASTER_KEY}"
+    if BIFROST_API_KEY:
+        headers["Authorization"] = f"Bearer {BIFROST_API_KEY}"
 
     tools = await get_tools()
+    payload = {
+        "model": model,
+        "messages": messages,
+        "tools": tools,
+        "tool_choice": "auto",
+        "max_tokens": 1024,
+        "temperature": 0.7,
+    }
+    if fallback_model and fallback_model != model:
+        payload["fallbacks"] = [fallback_model]
 
     async with httpx.AsyncClient(timeout=45) as client:
         resp = await client.post(
-            f"{LITELLM_URL}/chat/completions",
+            f"{BIFROST_URL}/v1/chat/completions",
             headers=headers,
-            json={
-                "model": tier,
-                "messages": messages,
-                "tools": tools,
-                "tool_choice": "auto",
-                "max_tokens": 1024,
-                "temperature": 0.7,
-            },
+            json=payload,
         )
         resp.raise_for_status()
         data = resp.json()
@@ -177,14 +181,14 @@ async def _call_litellm_with_tools(tier: str, messages: list[dict]) -> LLMRespon
     tokens = data.get("usage", {}).get("total_tokens", 0)
     tool_calls = _extract_tool_calls(choice)
 
-    return LLMResponse(text=content, model_used=tier, tokens_used=tokens, tool_calls=tool_calls)
+    return LLMResponse(text=content, model_used=model, tokens_used=tokens, tool_calls=tool_calls)
 
 
 async def _call_groq_fallback(messages: list[dict]) -> LLMResponse:
     """
     Last-resort fallback — calls Groq directly without function calling.
     Produces a text-only response with no structured actions.
-    Used only when the LiteLLM gateway is completely unreachable.
+    Used only when the Bifrost gateway is completely unreachable.
     """
     if not GROQ_API_KEY:
         raise RuntimeError("GROQ_API_KEY not set — no fallback available")
@@ -221,11 +225,15 @@ async def generate(
     """
     messages = _build_messages(user_text, history, rag_context)
 
-    # 1. LiteLLM gateway (with function calling + provider fallbacks internally)
+    model, fallback_model = await resolve_tier(tier)
+    if not model:
+        raise RuntimeError(f"No model configured for tier '{tier}' and no valid fallback tier '{TIER_FALLBACK}'")
+
+    # 1. Bifrost gateway (with function calling + per-request fallbacks)
     try:
-        return await _call_litellm_with_tools(tier, messages)
+        return await _call_bifrost_with_tools(model, fallback_model, messages)
     except Exception as exc:
-        logger.warning("LiteLLM gateway failed [tier=%s]: %s — trying Groq direct", tier, exc)
+        logger.warning("Bifrost gateway failed [tier=%s model=%s]: %s — trying Groq direct", tier, model, exc)
 
     # 2. Groq direct — degraded mode, no structured actions
     return await _call_groq_fallback(messages)

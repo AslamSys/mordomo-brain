@@ -38,7 +38,7 @@ async def run() -> None:
             # Ensure Qdrant collection exists before accepting any messages
             await ensure_collection()
 
-            # Warm tier cache — discovers available tiers from the LiteLLM gateway
+            # Warm tier cache from Redis (seeded by deploy flow)
             await init_tiers()
 
             # Seed + warm tool registry — discovers capabilities from Redis

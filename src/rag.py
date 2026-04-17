@@ -9,7 +9,8 @@ import httpx
 
 from src.config import (
     QDRANT_URL, QDRANT_COLLECTION, QDRANT_VECTOR_SIZE,
-    RAG_ENABLED, RAG_TOP_K, RAG_MIN_SCORE, LITELLM_URL,
+    RAG_ENABLED, RAG_TOP_K, RAG_MIN_SCORE,
+    BIFROST_URL, BIFROST_API_KEY, EMBEDDING_MODEL,
 )
 
 logger = logging.getLogger(__name__)
@@ -41,12 +42,17 @@ async def ensure_collection() -> None:
 
 
 async def _get_embedding(text: str) -> Optional[list[float]]:
-    """Get text embedding via LiteLLM gateway."""
+    """Get text embedding via Bifrost gateway."""
+    headers = {"Content-Type": "application/json"}
+    if BIFROST_API_KEY:
+        headers["Authorization"] = f"Bearer {BIFROST_API_KEY}"
+
     try:
         async with httpx.AsyncClient(timeout=10) as client:
             resp = await client.post(
-                f"{LITELLM_URL}/embeddings",
-                json={"model": "mordomo-embeddings", "input": text},
+                f"{BIFROST_URL}/v1/embeddings",
+                headers=headers,
+                json={"model": EMBEDDING_MODEL, "input": text},
             )
             resp.raise_for_status()
             return resp.json()["data"][0]["embedding"]
