@@ -42,6 +42,7 @@ async def handle_generate(msg: Msg) -> None:
 
     text       = data.get("text", "").strip()
     speaker_id = data.get("speaker_id", "unknown")
+    source     = data.get("source", "mordomo")
 
     if not text:
         if msg.reply:
@@ -50,7 +51,7 @@ async def handle_generate(msg: Msg) -> None:
 
     # 1. Load conversation history and RAG context
     history     = await get_history(speaker_id)
-    rag_context = await search(text, speaker_id)
+    rag_context = await search(text, speaker_id, source=source)
 
     # 2. Phase 1 — classify tier
     tiers = await get_tiers()
@@ -105,6 +106,11 @@ async def handle_generate(msg: Msg) -> None:
         text=f"Usuário: {text}\nMordomo: {clean_text}",
         speaker_id=speaker_id,
         point_id=str(uuid.uuid4()),
+        metadata={
+            "source": source,
+            "timestamp": time.time(),
+            "tier": classification.tier
+        }
     )
 
     # 7. Publish each detected action to NATS

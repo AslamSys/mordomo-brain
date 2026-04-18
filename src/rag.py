@@ -61,7 +61,7 @@ async def _get_embedding(text: str) -> Optional[list[float]]:
         return None
 
 
-async def search(text: str, speaker_id: str) -> list[str]:
+async def search(text: str, speaker_id: str, source: Optional[str] = None) -> list[str]:
     """Return list of relevant text snippets from Qdrant, or empty list on failure."""
     if not RAG_ENABLED:
         return []
@@ -70,6 +70,12 @@ async def search(text: str, speaker_id: str) -> list[str]:
     if not embedding:
         return []
 
+    must_filters = [{"key": "speaker_id", "match": {"value": speaker_id}}]
+    
+    # If a specific source is requested, we can filter by it
+    # However, usually we want to see ALL context but labeled. 
+    # For now, let's just keep speaker_id filtering and return the metadata.
+    
     try:
         async with httpx.AsyncClient(timeout=10) as client:
             resp = await client.post(
@@ -78,21 +84,28 @@ async def search(text: str, speaker_id: str) -> list[str]:
                     "vector": embedding,
                     "limit": RAG_TOP_K,
                     "score_threshold": RAG_MIN_SCORE,
-                    "filter": {
-                        "must": [{"key": "speaker_id", "match": {"value": speaker_id}}]
-                    },
+                    "filter": {"must": must_filters},
                     "with_payload": True,
                 },
             )
             resp.raise_for_status()
             hits = resp.json().get("result", [])
-            return [h["payload"].get("text", "") for h in hits if h.get("payload")]
+            
+            snippets = []
+            for h in hits:
+                payload = h.get("payload", {})
+                txt = payload.get("text", "")
+                src = payload.get("source", "unknown")
+                # Prepend source label for LLM awareness
+                snippets.append(f"[{src.upper()}]: {txt}")
+                
+            return snippets
     except Exception as e:
         logger.warning("Qdrant search failed: %s", e)
         return []
 
 
-async def upsert(text: str, speaker_id: str, point_id: str) -> None:
+async def upsert(text: str, speaker_id: str, point_id: str, metadata: Optional[dict] = None) -> None:
     """Store a new text snippet in Qdrant for future RAG retrieval."""
     if not RAG_ENABLED:
         return
@@ -100,6 +113,10 @@ async def upsert(text: str, speaker_id: str, point_id: str) -> None:
     embedding = await _get_embedding(text)
     if not embedding:
         return
+
+    payload = {"text": text, "speaker_id": speaker_id}
+    if metadata:
+        payload.update(metadata)
 
     try:
         async with httpx.AsyncClient(timeout=10) as client:
@@ -109,7 +126,7 @@ async def upsert(text: str, speaker_id: str, point_id: str) -> None:
                     "points": [{
                         "id":      point_id,
                         "vector":  embedding,
-                        "payload": {"text": text, "speaker_id": speaker_id},
+                        "payload": payload,
                     }]
                 },
             )
